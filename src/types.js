@@ -157,8 +157,8 @@ export type BodilessFunctionOrMethodBase = HasDecorators & {
 
   // TODO: All not in spec
   expression: boolean,
-  typeParameters?: ?TypeParameterDeclaration,
-  returnType?: ?TypeAnnotation,
+  typeParameters?: ?TypeParameterDeclarationBase,
+  returnType?: ?TypeAnnotationBase,
 };
 
 export type BodilessFunctionBase = BodilessFunctionOrMethodBase & {
@@ -524,7 +524,7 @@ export type ConditionalExpression = NodeBase & {
 export type CallOrNewBase = NodeBase & {
   callee: Expression | Super | Import,
   arguments: Array<Expression | SpreadElement>, // TODO: $ReadOnlyArray
-  typeParameters?: ?TypeParameterInstantiation, // TODO: Not in spec
+  typeParameters?: ?TypeParameterInstantiationBase, // TODO: Not in spec
 };
 
 export type CallExpression = CallOrNewBase & {
@@ -572,7 +572,7 @@ export type Accessibility = "public" | "protected" | "private";
 export type PatternBase = HasDecorators & {
   // TODO: All not in spec
   // Flow/TypeScript only:
-  typeAnnotation?: ?TypeAnnotation,
+  typeAnnotation?: ?TypeAnnotationBase,
 };
 
 export type AssignmentProperty = ObjectProperty & {
@@ -611,8 +611,8 @@ export type ClassBase = HasDecorators & {
   decorators: $ReadOnlyArray<Decorator>,
 
   // TODO: All not in spec
-  typeParameters?: ?TypeParameterDeclaration,
-  superTypeParameters?: ?TypeParameterInstantiation,
+  typeParameters?: ?TypeParameterDeclarationBase,
+  superTypeParameters?: ?TypeParameterInstantiationBase,
   implements?:
     | ?$ReadOnlyArray<TsExpressionWithTypeArguments>
     | $ReadOnlyArray<FlowClassImplements>,
@@ -669,7 +669,7 @@ export type ClassProperty = ClassMemberBase & {
   key: Expression,
   value: ?Expression, // TODO: Not in spec that this is nullable.
 
-  typeAnnotation?: ?TypeAnnotation, // TODO: Not in spec
+  typeAnnotation?: ?TypeAnnotationBase, // TODO: Not in spec
   variance?: ?FlowVariance, // TODO: Not in spec
 
   // TypeScript only: (TODO: Not in spec)
@@ -791,34 +791,79 @@ export type JSXElement = Node;
 
 // Flow/TypeScript common (TODO: Not in spec)
 
-export type TypeAnnotation = NodeBase & {
-  type: "TypeAnnotation",
-  typeAnnotation: TsType | FlowTypeAnnotation,
+export type TypeAnnotationBase = NodeBase & {
+  typeAnnotation: Node,
 };
 
-export type TypeParameterDeclaration = NodeBase & {
+export type TypeAnnotation = NodeBase & {
+  type: "TypeAnnotation",
+  typeAnnotation: FlowTypeAnnotation,
+};
+
+export type TsTypeAnnotation = NodeBase & {
+  type: "TSTypeAnnotation",
+  typeAnnotation: TsType,
+};
+
+export type TypeParameterDeclarationBase = NodeBase & {
+  params: $ReadOnlyArray<TypeParameterBase>,
+};
+
+export type TypeParameterDeclaration = TypeParameterDeclarationBase & {
   type: "TypeParameterDeclaration",
   params: $ReadOnlyArray<TypeParameter>,
 };
 
-export type TypeParameter = NodeBase & {
-  type: "TypeParameter",
+export type TsTypeParameterDeclaration = TypeParameterDeclarationBase & {
+  type: "TsTypeParameterDeclaration",
+  params: $ReadOnlyArray<TsTypeParameter>,
+};
+
+export type TypeParameterBase = NodeBase & {
   name: string,
+};
+
+export type TypeParameter = TypeParameterBase & {
+  type: "TypeParameter",
+};
+
+export type TsTypeParameter = TypeParameterBase & {
+  type: "TSTypeParameter",
   constraint?: TsType,
   default?: TsType,
 };
 
-export type TypeParameterInstantiation = NodeBase & {
+export type TypeParameterInstantiationBase = NodeBase & {
+  params: $ReadOnlyArray<Node>,
+};
+
+export type TypeParameterInstantiation = TypeParameterInstantiationBase & {
   type: "TypeParameterInstantiation",
-  params: $ReadOnlyArray<TsType> | $ReadOnlyArray<FlowType>,
+  params: $ReadOnlyArray<FlowType>,
+};
+
+export type TsTypeParameterInstantiation = TypeParameterInstantiationBase & {
+  type: "TSTypeParameterInstantiation",
+  params: $ReadOnlyArray<TsType>,
 };
 
 // Flow (TODO: Not in spec)
+
+export type TypeCastExpressionBase = NodeBase & {
+  expression: Expression,
+  typeAnnotation: TypeAnnotationBase,
+};
 
 export type TypeCastExpression = NodeBase & {
   type: "TypeCastExpression",
   expression: Expression,
   typeAnnotation: TypeAnnotation,
+};
+
+export type TsTypeCastExpression = NodeBase & {
+  type: "TSTypeCastExpression",
+  expression: Expression,
+  typeAnnotation: TsTypeAnnotation,
 };
 
 export type FlowType = Node;
@@ -926,11 +971,11 @@ export type TsSignatureDeclaration =
 export type TsSignatureDeclarationOrIndexSignatureBase = NodeBase & {
   // Not using TypeScript's "ParameterDeclaration" here, since it's inconsistent with regular functions.
   parameters: $ReadOnlyArray<Identifier | RestElement>,
-  typeAnnotation: ?TypeAnnotation,
+  typeAnnotation: ?TsTypeAnnotation,
 };
 
 export type TsSignatureDeclarationBase = TsSignatureDeclarationOrIndexSignatureBase & {
-  typeParameters: ?TypeParameterDeclaration,
+  typeParameters: ?TsTypeParameterDeclaration,
 };
 
 // ================
@@ -963,7 +1008,7 @@ export type TsNamedTypeElementBase = NodeBase & {
 export type TsPropertySignature = TsNamedTypeElementBase & {
   type: "TSPropertySignature",
   readonly?: true,
-  typeAnnotation?: TypeAnnotation,
+  typeAnnotation?: TsTypeAnnotation,
   initializer?: Expression,
 };
 
@@ -1033,19 +1078,19 @@ export type TsFunctionType = TsTypeBase &
 export type TsConstructorType = TsTypeBase &
   TsSignatureDeclarationBase & {
     type: "TSConstructorType",
-    typeAnnotation: TypeAnnotation,
+    typeAnnotation: TsTypeAnnotation,
   };
 
 export type TsTypeReference = TsTypeBase & {
   type: "TSTypeReference",
   typeName: TsEntityName,
-  typeParameters?: TypeParameterInstantiation,
+  typeParameters?: TsTypeParameterInstantiation,
 };
 
 export type TsTypePredicate = TsTypeBase & {
   type: "TSTypePredicate",
   parameterName: Identifier | TsThisType,
-  typeAnnotation: TypeAnnotation,
+  typeAnnotation: TsTypeAnnotation,
 };
 
 // `typeof` operator
@@ -1103,7 +1148,7 @@ export type TsIndexedAccessType = TsTypeBase & {
 export type TsMappedType = TsTypeBase & {
   type: "TSMappedType",
   readonly?: true,
-  typeParameter: TypeParameter,
+  typeParameter: TsTypeParameter,
   optional?: true,
   typeAnnotation: ?TsType,
 };
@@ -1120,7 +1165,7 @@ export type TsLiteralType = TsTypeBase & {
 export type TsInterfaceDeclaration = DeclarationBase & {
   type: "TSInterfaceDeclaration",
   id: Identifier,
-  typeParameters: ?TypeParameterDeclaration,
+  typeParameters: ?TsTypeParameterDeclaration,
   // TS uses "heritageClauses", but want this to resemble ClassBase.
   extends?: $ReadOnlyArray<TsExpressionWithTypeArguments>,
   body: TSInterfaceBody,
@@ -1134,13 +1179,13 @@ export type TSInterfaceBody = NodeBase & {
 export type TsExpressionWithTypeArguments = TsTypeBase & {
   type: "TSExpressionWithTypeArguments",
   expression: TsEntityName,
-  typeParameters?: TypeParameterInstantiation,
+  typeParameters?: TsTypeParameterInstantiation,
 };
 
 export type TsTypeAliasDeclaration = DeclarationBase & {
   type: "TSTypeAliasDeclaration",
   id: Identifier,
-  typeParameters: ?TypeParameterDeclaration,
+  typeParameters: ?TsTypeParameterDeclaration,
   typeAnnotation: TsType,
 };
 
